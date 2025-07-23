@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบยืมคืนอุปกรณ์</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Kanit', Arial, sans-serif; background: linear-gradient(120deg,#fdf6f0 0%, #f7e0ff 100%); margin: 0; min-height:100vh;}
+    header {
+      background: linear-gradient(90deg, #ff6a7f 0%, #b26cff 100%);
+      color: #fff;
+      padding: 28px 0 18px 0;
+      text-align: center;
+      font-size: 1.7em;
+      font-weight: 700;
+      box-shadow: 0 8px 24px #b26cff33;
+      letter-spacing:1px;
+      margin-bottom:12px;
+      animation: headerFade .7s;
+    }
+    @keyframes headerFade { from {opacity: 0; transform: translateY(-30px);} to {opacity:1; transform:none;} }
+    .container { max-width: 1150px; margin: 20px auto 0 auto; padding: 0 16px;}
+    .search-bar {
+      display: flex; gap: 12px; margin-bottom: 22px; align-items: center; flex-wrap: wrap;
+      animation: fadeinup .7s;
+    }
+    @keyframes fadeinup { from {opacity:0;transform: translateY(30px);} to {opacity:1;transform:none;} }
+    .search-bar input[type="text"] {
+      flex: 1; padding: 10px 14px; border: 1px solid #e4d0fa; border-radius: 9px; font-size: 1em; background: #f4f1fa; min-width:120px;
+      transition: box-shadow .13s;
+    }
+    .search-bar input[type="text"]:focus { outline: 1.5px solid #a174f6; box-shadow: 0 2px 8px #b26cff16; }
+    .search-bar button, .search-bar select {
+      padding: 9px 18px; border-radius: 9px; border: none; font-size: 1em; font-weight: bold; cursor: pointer;
+      transition: background .14s, color .15s, box-shadow .14s;
+      margin-left: 0;
+    }
+    .search-bar button { background: #fff; color: #a246eb; border: 1.5px solid #a246eb; margin-right:0;}
+    .search-bar button:hover { background: #a246eb; color: #fff; }
+    .add-btn {
+      background: linear-gradient(90deg,#a246eb 0%, #ff6a7f 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 2px 14px #ff6a7f20;
+      font-size:1.1em;
+      margin-bottom: 8px;
+      margin-right: 8px;
+      padding: 10px 28px;
+      font-weight: 700;
+    }
+    .add-btn:hover { background:linear-gradient(90deg,#ff6a7f 0%, #a246eb 100%); }
+    .filter-pill {
+      display: inline-flex;
+      border-radius: 19px;
+      border: 2px solid #e4d0fa;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 9px #b26cff12;
+      margin-left: 16px;
+    }
+    .filter-pill button {
+      border: none; background: none; padding: 8px 28px; font-family: inherit; font-size: 1em; cursor: pointer;
+      color: #a246eb; font-weight: 600; transition: background .14s, color .14s;
+    }
+    .filter-pill button.active { background: #a246eb; color: #fff;}
+    .filter-pill button[data-filter="borrowed"].active { background: #ffe6e6; color: #e53935; }
+    .filter-pill button[data-filter="ready"].active { background: #caefb6; color: #81db9b;}
+    .filter-pill button:not(.active):hover { background: #f7f7f7;}
+    .device-list {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; margin-top: 14px;
+    }
+    .device-card {
+      background: #fff; border-radius: 19px; box-shadow: 0 6px 24px #a246eb0a, 0 1.5px 6px #b26cff10;
+      overflow: hidden; display: flex; flex-direction: column; border: 1.5px solid #efefff;
+      transition: box-shadow .16s, transform .14s, border .15s;
+      position:relative;
+      animation: fadeinup .5s;
+    }
+    .device-card:hover { transform: scale(1.025); border:1.5px solid #a246eb; box-shadow: 0 16px 38px #b26cff13;}
+    .device-card img { width: 100%; height: 150px; object-fit: cover; background: #ede8fa;}
+    .device-info { padding: 20px 18px 10px 18px; flex: 1; display: flex; flex-direction: column;}
+    .device-title { font-weight: 600; font-size: 1.17em; margin-bottom: 2px; color: #5e2a8d;}
+    .device-details { color: #888; font-size: 1em; margin-bottom: 9px; line-height: 1.6; }
+    .device-status.ready { color: #43a047; font-weight:500;}
+    .device-status.borrowed { color: #e53935; font-weight:500;}
+    .device-status {font-size:1em; }
+    .borrow-btn {
+      margin-top: auto;
+      padding: 12px 0;
+      background: #a246eb;
+      color: #fff;
+      border: none;
+      border-radius: 11px;
+      font-size: 1.06em;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 6px #a246eb13;
+      transition: background .17s, color .13s;
+    }
+    .borrow-btn.borrowed { background: #ff9090; color: #fff; }
+    .borrow-btn.ready { background: linear-gradient(90deg,#43e97b 0%,#38f9d7 100%); color: #1a5236; }
+    .borrow-btn.return { background: #e53935; color: #fff; }
+    .borrow-btn[disabled] { background: #ccc; color: #fff; cursor: not-allowed;}
+    .borrow-btn:active { filter:brightness(0.93);}
+    .popup-bg { display: none; position: fixed; z-index: 999; left: 0; top: 0; right: 0; bottom: 0; background: rgba(40,9,54,0.17); justify-content: center; align-items: center;}
+    .popup-bg.active { display: flex;}
+    .popup-box {
+      background: #fff; border-radius: 15px; max-width: 370px; width: 94vw; padding: 34px 22px 20px 22px; box-shadow: 0 8px 52px #a246eb33;
+      animation: fade-in .17s; position: relative;
+    }
+    @keyframes fade-in { from { opacity: 0; transform: scale(.97);} to { opacity: 1; transform: scale(1);} }
+    .popup-box h3 { margin: 0 0 18px 0; font-size: 1.18em; font-weight: 600; text-align: center; color: #a246eb; letter-spacing: 1.1px;}
+    .popup-box label { display: block; margin: 11px 0 3px 0; font-weight: 500;}
+    .popup-box input[type="text"], .popup-box input[type="date"], .popup-box textarea {
+      width: 100%; border: 1.4px solid #e4d0fa; border-radius: 8px; padding: 8px; font-size: 1em; margin-bottom: 8px; font-family: inherit; background: #f6f3fc;
+    }
+    .popup-box input[disabled] { background: #ececec; color:#aaa;}
+    .popup-box textarea { min-height: 54px; resize: vertical;}
+    .popup-actions { text-align: right; margin-top: 13px;}
+    .popup-actions button {
+      padding: 8px 20px; border-radius: 7px; border: none; font-size: 1em; margin-left: 8px; font-family: inherit; font-weight: bold; cursor: pointer;
+      transition: background .13s, color .13s;
+    }
+    .popup-actions .cancel-btn { background: #ececec; color: #888;}
+    .popup-actions .save-btn { background: #a246eb; color: #fff;}
+    .popup-actions .save-btn:hover { background: #ff6a7f;}
+    .popup-close { position: absolute; right: 18px; top: 14px; cursor: pointer; font-size: 1.3em; color: #bbb; background: none; border: none; transition:color .14s;}
+    .popup-close:hover { color: #ff6a7f;}
+    @media (max-width: 800px) { .container { max-width: 99vw;} .device-card img { height: 125px; } }
+    @media (max-width: 600px) { .device-list { grid-template-columns: 1fr;} header { font-size: 1.08em; padding: 16px 0 10px 0;} .popup-box { padding: 16px 7px;}}
+  </style>
+</head>
+<body>
+  <header>ระบบยืมคืนอุปกรณ์</header>
+  <div class="container">
+    <div class="search-bar">
+      <button class="add-btn" onclick="openAddDevicePopup()">+ เพิ่มอุปกรณ์ใหม่</button>
+      <input type="text" id="search" placeholder="ค้นหา...">
+      <button onclick="document.getElementById('search').value=''; renderDevices();">รีเฟรช</button>
+      <div class="filter-pill" id="filter-pill">
+        <button data-filter="all" class="active">ทั้งหมด</button>
+        <button data-filter="ready">พร้อมใช้งาน</button>
+        <button data-filter="borrowed">ถูกยืม</button>
+      </div>
+    </div>
+    <div class="device-list" id="device-list"></div>
+  </div>
+  <!-- Popup ยืม/คืน -->
+  <div class="popup-bg" id="borrow-popup">
+    <form class="popup-box" onsubmit="handleBorrowSubmit(event)">
+      <button class="popup-close" type="button" onclick="closeBorrowPopup()">&times;</button>
+      <h3 id="borrow-title">ยืมอุปกรณ์</h3>
+      <label>ชื่อผู้ยืม:*</label>
+      <input type="text" id="borrower-name" required>
+      <label>วันที่คืนตามกำหนด:*</label>
+      <input type="date" id="borrow-date" required>
+      <div class="popup-actions">
+        <button type="button" class="cancel-btn" onclick="closeBorrowPopup()">ยกเลิก</button>
+        <button type="submit" class="save-btn" id="borrow-action-btn">ยืนยันการยืม</button>
+      </div>
+    </form>
+  </div>
+  <!-- Popup เพิ่มอุปกรณ์ใหม่ -->
+  <div class="popup-bg" id="add-device-popup">
+    <form class="popup-box" onsubmit="handleAddDeviceSubmit(event)">
+      <button class="popup-close" type="button" onclick="closeAddDevicePopup()">&times;</button>
+      <h3>เพิ่มอุปกรณ์ใหม่เข้าสู่ระบบ</h3>
+      <label>ID อุปกรณ์ (สุ่มอัตโนมัติ)*</label>
+      <input type="text" id="new-id" required disabled>
+      <label>ชื่ออุปกรณ์*</label>
+      <input type="text" id="new-name" required>
+      <label>หมวดหมู่*</label>
+      <input type="text" id="new-category" required>
+      <label>ลิงก์รูปภาพ (URL)</label>
+      <input type="text" id="new-img" placeholder="https://example.com/image.jpg">
+      <label>หมายเหตุ</label>
+      <textarea id="new-note" placeholder=""></textarea>
+      <div class="popup-actions">
+        <button type="button" class="cancel-btn" onclick="closeAddDevicePopup()">ยกเลิก</button>
+        <button type="submit" class="save-btn">บันทึกอุปกรณ์</button>
+      </div>
+    </form>
+  </div>
+<script>
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzC8dTyy92bdXDmskNjBbNCiJLX-77ogltF3thKr9fLhpbwJ3tUxgnqYnKXiPDS00P/exec"; // <--- ใส่ URL จริง!
+
+  const devices = [
+    { id: "820015", name: "เมาส์ VXE R1 PRO MAX", category: "กล้อง", status: "ready", img: "12.jpg", note: "", borrower: "", duedate: "" },
+    { id: "8J0152", name: "คีย์บอร์ด AURA F75", category: "กล้อง", status: "ready", img: "13.webp", note: "", borrower: "", duedate: "" },
+    { id: "8I1734", name: "ไมค์ HYPERX", category: "กล้อง", status: "ready", img: "16.webp", note: "", borrower: "", duedate: "" },
+    { id: "879892", name: "คีย์บอร์ด AJAZZ K820 MAX", category: "ขาตั้ง", status: "ready", img: "14.jpg", note: "", borrower: "", duedate: "" },
+    { id: "879952", name: "เมาส์ G PRO Superlight", category: "ขาตั้งกล้อง", status: "ready", img: "15.webp", note: "", borrower: "", duedate: "" },
+    { id: "982321", name: "หูฟัง BGVP", category: "ไฟ", status: "ready", img: "20.jpg", note: "", borrower: "", duedate: "" },
+  ];
+  let currentBorrowIndex = null;
+  let deviceFilter = "all";
+
+  document.querySelectorAll('.filter-pill button').forEach(btn => {
+    btn.onclick = function() {
+      document.querySelectorAll('.filter-pill button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      deviceFilter = this.getAttribute('data-filter');
+      renderDevices();
+    };
+  });
+
+  function renderDevices() {
+    const query = document.getElementById("search").value.toLowerCase();
+    const deviceList = document.getElementById("device-list");
+    let filtered = devices.filter(dev => {
+      const match = dev.name.toLowerCase().includes(query) || dev.id.includes(query) || (dev.category && dev.category.includes(query));
+      if (deviceFilter === "all") return match;
+      return match && (deviceFilter === dev.status);
+    });
+    deviceList.innerHTML = filtered.length === 0
+      ? '<div style="grid-column:1/-1;text-align:center;color:#888;margin:40px 0;">ไม่มีรายการที่ตรงกับเงื่อนไข</div>'
+      : filtered.map((dev, idx) => `
+      <div class="device-card">
+        <img src="${dev.img || 'https://cdn-icons-png.flaticon.com/512/3649/3649463.png'}" alt="">
+        <div class="device-info">
+          <div class="device-title">${dev.name}</div>
+          <div class="device-details">
+            <b>ID:</b> ${dev.id}<br>
+            <b>หมวดหมู่:</b> ${dev.category || "-"}<br>
+            <span class="device-status ${dev.status}">
+              <b>สถานะ:</b> ${dev.status === "ready" ? "พร้อมใช้งาน" : "ถูกยืม"}
+            </span>
+            ${dev.borrower ? `<div style="font-size:.95em;color:#a246eb;margin-top:5px;">
+              <b>ผู้ยืม:</b> ${dev.borrower}<br><b>คืนวันที่:</b> ${dev.duedate}
+            </div>` : ""}
+            ${dev.note ? `<div style="font-size:.93em;color:#888;margin-top:3px;">หมายเหตุ: ${dev.note}</div>` : ""}
+          </div>
+          <button class="borrow-btn ${dev.status}${dev.status==='borrowed'?'':' ready'}"
+            onclick="${dev.status === "ready" ? `openBorrowPopup(${idx})` : `returnDevice(${idx})`}"
+            style="${dev.status==='borrowed'
+              ? 'background:#fff4e5;color:#e53935;border:1.3px solid #e53935;'
+              : 'background:linear-gradient(90deg,#43e97b 0%,#38f9d7 100%);color:#1a5236;'}"
+          >
+            ${dev.status === "ready" ? "ยืมอุปกรณ์นี้" : "คืนอุปกรณ์"}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openBorrowPopup(idx) {
+    currentBorrowIndex = idx;
+    document.getElementById("borrow-popup").classList.add("active");
+    document.getElementById("borrow-title").innerText = "ยืมอุปกรณ์: " + devices[idx].name;
+    document.getElementById("borrower-name").value = "";
+    document.getElementById("borrow-date").value = "";
+    document.getElementById("borrow-action-btn").innerText = "ยืนยันการยืม";
+  }
+  function closeBorrowPopup() {
+    document.getElementById("borrow-popup").classList.remove("active");
+  }
+  function handleBorrowSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById("borrower-name").value.trim();
+    const date = document.getElementById("borrow-date").value;
+    if (!name || !date) { alert("กรุณากรอกข้อมูลให้ครบ"); return; }
+    devices[currentBorrowIndex].status = "borrowed";
+    devices[currentBorrowIndex].borrower = name;
+    devices[currentBorrowIndex].duedate = date.split('-').reverse().join('/');
+    sendToGoogleSheet({action:'borrow', ...devices[currentBorrowIndex]});
+    closeBorrowPopup();
+    renderDevices();
+  }
+  function returnDevice(idx) {
+    if (confirm("ยืนยันการคืนอุปกรณ์?")) {
+      sendToGoogleSheet({action:'return', ...devices[idx]});
+      devices[idx].status = "ready";
+      devices[idx].borrower = "";
+      devices[idx].duedate = "";
+      renderDevices();
+    }
+  }
+
+  function openAddDevicePopup() {
+    document.getElementById("add-device-popup").classList.add("active");
+    document.getElementById("new-id").value = genId();
+    document.getElementById("new-name").value = "";
+    document.getElementById("new-category").value = "";
+    document.getElementById("new-img").value = "";
+    document.getElementById("new-note").value = "";
+  }
+  function closeAddDevicePopup() {
+    document.getElementById("add-device-popup").classList.remove("active");
+  }
+  function handleAddDeviceSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById("new-id").value.trim();
+    const name = document.getElementById("new-name").value.trim();
+    const category = document.getElementById("new-category").value.trim();
+    const img = document.getElementById("new-img").value.trim();
+    const note = document.getElementById("new-note").value.trim();
+    if (!id || !name || !category) {
+      alert("กรุณากรอกข้อมูลที่จำเป็น");
+      return;
+    }
+    if (devices.some(d => d.id === id)) {
+      alert("ID อุปกรณ์นี้ถูกใช้แล้ว!");
+      return;
+    }
+    let newItem = {
+      id, name, category, img, note,
+      status: "ready", borrower: "", duedate: ""
+    };
+    devices.push(newItem);
+    sendToGoogleSheet({action:'add', ...newItem});
+    closeAddDevicePopup();
+    renderDevices();
+  }
+
+  function genId() {
+    let id;
+    do {
+      id = Math.floor(100000 + Math.random() * 900000).toString();
+    } while (devices.some(d => d.id === id));
+    return id;
+  }
+
+  document.getElementById("search").addEventListener("input", renderDevices);
+  renderDevices();
+
+  function sendToGoogleSheet(obj) {
+    if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('xxxxxx')) return;
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(obj),
+      headers: {"Content-Type": "application/json"}
+    })
+    .catch(err=>{console.log("GoogleSheet ERROR",err);});
+  }
+</script>
+</body>
+</html>
